@@ -1,0 +1,173 @@
+server:
+  port: 8081
+  shutdown: graceful
+
+spring:
+  application:
+    name: waba-service
+
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+
+  # ─────────────────────────────────────────────────────────
+  # DATABASE
+  # ─────────────────────────────────────────────────────────
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/apargo_wa_messaging?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true}
+    username: root
+    password: yuvraj@3933
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      pool-name: WabaHikariPool
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      keepalive-time: 60000
+      connection-test-query: SELECT 1
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+    show-sql: false
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          batch_size: 20
+        order_inserts: true
+        order_updates: true
+
+
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: false
+    default-property-inclusion: non_null
+    serialization:
+      write-dates-as-timestamps: false
+
+# ─────────────────────────────────────────────────────────────
+# META CLOUD API — Direct Tech Partner (no BSP)
+# Set real values via env vars in production
+# ─────────────────────────────────────────────────────────────
+meta:
+  app-id: ${META_APP_ID:64}
+  app-secret: ${META_APP_SECRET:7f07488}
+  graph-api-version: v23.0
+  graph-api-base-url: https://graph.facebook.com
+  webhook-verify-token: ${WEBHOOK_VERIFY_TOKEN:65487908975900}
+  embedded-signup-config-id: ${META_EMBEDDED_SIGNUP_CONFIG_ID:1166327075264525}
+  # Separate version for subscribe webhook + register phone
+  phone-registration-api-version: v18.0
+  # default PIN for phone registration
+  default-registration-pin: "123456"
+
+
+  # ─────────────────────────────────────────────────────────────
+  # TOKEN ENCRYPTION (GAP 4)
+  # AES-256-GCM encryption for Meta access tokens stored in DB.
+  # Generate key: openssl rand -hex 32
+  # CRITICAL: Changing this key makes all existing tokens unreadable.
+  # Rotate safely: decrypt all → re-encrypt with new key → then swap.
+  # ─────────────────────────────────────────────────────────────
+token:
+  encryption:
+    key: ${TOKEN_ENCRYPTION_KEY:a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2}
+
+
+# ─────────────────────────────────────────────────────────────
+# RESILIENCE4J — Fault tolerance for Meta API calls
+# ─────────────────────────────────────────────────────────────
+resilience4j:
+
+  circuitbreaker:
+    instances:
+      metaApi:
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        slow-call-rate-threshold: 80
+        slow-call-duration-threshold: 10s
+        permitted-number-of-calls-in-half-open-state: 3
+        wait-duration-in-open-state: 30s
+        automatic-transition-from-open-to-half-open-enabled: true
+        record-exceptions:
+          - com.aigreentick.services.wabaaccounts.exception.MetaApiException
+          - java.io.IOException
+          - java.util.concurrent.TimeoutException
+        ignore-exceptions:
+          - com.aigreentick.services.wabaaccounts.exception.MetaApiException$ClientException
+
+  retry:
+    instances:
+      metaApi:
+        max-attempts: 3
+        wait-duration: 1s
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 2.0
+        exponential-max-wait-duration: 8s
+        retry-exceptions:
+          - com.aigreentick.services.wabaaccounts.exception.MetaApiException
+          - java.io.IOException
+        ignore-exceptions:
+          - com.aigreentick.services.wabaaccounts.exception.MetaApiException$ClientException
+          - java.lang.IllegalArgumentException
+
+  ratelimiter:
+    instances:
+      metaApi:
+        limit-for-period: 80
+        limit-refresh-period: 1m
+        timeout-duration: 0s
+
+# ─────────────────────────────────────────────────────────────
+# ACTUATOR
+#   1. Actuator moved to a separate internal port (8082).
+#      Expose port 8081 publicly, keep 8082 internal/VPC-only.
+#   2. Only 'health' is exposed on the public port (8081) via web exclusion.
+#   3. All other endpoints (prometheus, circuitbreakers, etc.) are on 8082.
+# ─────────────────────────────────────────────────────────────
+management:
+  server:
+    port: 8082          # Internal-only management port — do NOT expose to internet
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,circuitbreakers,retries
+  endpoint:
+    health:
+      show-details: when_authorized   # Changed from 'always' — hides internals from public
+      probes:
+        enabled: true
+  health:
+    circuitbreakers:
+      enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+
+# ─────────────────────────────────────────────────────────────
+# SWAGGER
+# ─────────────────────────────────────────────────────────────
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+
+# ─────────────────────────────────────────────────────────────
+# LOGGING
+# ─────────────────────────────────────────────────────────────
+logging:
+  level:
+    root: INFO
+    com.aigreentick.services.wabaaccounts: INFO
+    org.springframework.web: INFO
+    org.hibernate.SQL: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
