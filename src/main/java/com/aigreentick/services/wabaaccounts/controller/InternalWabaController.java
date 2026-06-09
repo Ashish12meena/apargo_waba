@@ -117,6 +117,7 @@ public class InternalWabaController {
 
         return ResponseEntity.ok(WabaCredentialsResponse.builder()
                 .wabaAccountId(waba.getId())
+                .wabaId(waba.getWabaId())
                 .phoneNumberId(metaPhoneNumberId)
                 .accessToken(accessToken)
                 .build());

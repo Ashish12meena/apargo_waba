@@ -6,8 +6,8 @@ spring:
   application:
     name: waba-service
 
-  profiles:
-   active: dev
+  # profiles:
+  #  active: dev
 
   lifecycle:
     timeout-per-shutdown-phase: 30s
@@ -176,10 +176,10 @@ logging:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
 
 
-eureka:
-  client:
-    service-url:
-      defaultZone: ${EUREKA_URL:http://localhost:8888/eureka/}
-    register-with-eureka: true
-    fetch-registry: true
-    enabled: ${EUREKA_ENABLED:false}
+# eureka:
+#   client:
+#     service-url:
+#       defaultZone: ${EUREKA_URL:http://localhost:8888/eureka/}
+#     register-with-eureka: true
+#     fetch-registry: true
+#     enabled: ${EUREKA_ENABLED:false}

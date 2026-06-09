@@ -29,6 +29,9 @@ public class WabaCredentialsResponse {
     @Schema(description = "Internal WABA account DB ID", example = "7001")
     private Long wabaAccountId;
 
+
+    private String wabaId;
+
     /**
      * Meta phone number ID — used as the 'from' field when sending messages.
      * This is Meta's opaque numeric ID, NOT the human-readable phone number.
