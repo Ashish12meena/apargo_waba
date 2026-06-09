@@ -174,3 +174,12 @@ logging:
     org.hibernate.SQL: WARN
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://localhost:8888/eureka/}
+    register-with-eureka: true
+    fetch-registry: true
+    enabled: ${EUREKA_ENABLED:false}
