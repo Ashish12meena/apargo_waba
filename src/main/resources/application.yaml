@@ -6,6 +6,9 @@ spring:
   application:
     name: waba-service
 
+  profiles:
+   active: dev
+
   lifecycle:
     timeout-per-shutdown-phase: 30s
 
@@ -15,7 +18,7 @@ spring:
   datasource:
     url: ${DB_URL:jdbc:mysql://localhost:3306/apargo_wa_messaging?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true}
     username: root
-    password: yuvraj@3933
+    password: meenagaming12@#
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       pool-name: WabaHikariPool

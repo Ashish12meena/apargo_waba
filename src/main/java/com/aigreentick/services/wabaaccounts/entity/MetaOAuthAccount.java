@@ -2,7 +2,7 @@ package com.aigreentick.services.wabaaccounts.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import lombok.Builder;
+
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
@@ -68,6 +68,7 @@ public class MetaOAuthAccount {
      * Whether this is a user token (60-day) or a permanent system user token.
      * Starts as USER_TOKEN after Phase 1. Becomes SYSTEM_USER after Phase 2.
      */
+    @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(name = "token_type", nullable = false, length = 20)
     private TokenType tokenType = TokenType.USER_TOKEN;
