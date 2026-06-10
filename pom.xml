@@ -6,8 +6,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <!-- Downgraded from 4.0.2 → 3.3.4 (stable LTS-track, full ecosystem support) -->
-        <version>3.3.4</version>
+        <version>3.5.6</version>
         <relativePath/>
     </parent>
 
@@ -25,16 +24,16 @@
     </properties>
 
     <dependencyManagement>
-		<dependencies>
-			<dependency>
-				<groupId>org.springframework.cloud</groupId>
-				<artifactId>spring-cloud-dependencies</artifactId>
-				<version>${spring-cloud.version}</version>
-				<type>pom</type>
-				<scope>import</scope>
-			</dependency>
-		</dependencies>
-	</dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
 
@@ -61,7 +60,6 @@
             <scope>runtime</scope>
         </dependency>
 
-
         <!-- ============================
              VALIDATION
              ============================ -->
@@ -72,7 +70,6 @@
 
         <!-- ============================
              RESILIENCE4J — Circuit Breaker + Retry + Rate Limiter
-             Replaces the previously commented-out Spring Retry
              ============================ -->
         <dependency>
             <groupId>io.github.resilience4j</groupId>
@@ -135,6 +132,9 @@
             <version>${springdoc.version}</version>
         </dependency>
 
+        <!-- ============================
+             SERVICE DISCOVERY
+             ============================ -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
@@ -148,7 +148,6 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
-
 
     </dependencies>
 
