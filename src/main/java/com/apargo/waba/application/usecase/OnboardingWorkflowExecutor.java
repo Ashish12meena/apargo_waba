@@ -41,6 +41,20 @@ import java.util.Map;
  * injected dependency instead of calling an {@code @Async} method on
  * itself.
  *
+ * <h2>Client-supplied resolution shortcuts</h2>
+ * {@code WABA_RESOLUTION} and {@code PHONE_NUMBER_RESOLUTION} each check
+ * whether the corresponding value was already supplied on {@code
+ * StartOnboardingRequest} (e.g. {@code waba_id}/{@code phone_number_id}
+ * returned directly to the frontend by the Embedded Signup JS SDK's
+ * {@code postMessage} "FINISH" event) and skip their Graph API call if so,
+ * using the client-supplied value as-is. When omitted, each step falls
+ * back to resolving it itself via the Graph API.
+ * <p>
+ * {@code BUSINESS_MANAGER_RESOLUTION} has no such shortcut —
+ * {@code businessManagerId} is deliberately never accepted from the
+ * client and is always resolved by this backend via {@code GET
+ * /me/businesses}.
+ *
  * <h2>Implementation confidence by step</h2>
  * <ul>
  *     <li><b>Implemented against the real Graph API</b>: {@code TOKEN_EXCHANGE},
@@ -263,6 +277,13 @@ public class OnboardingWorkflowExecutor {
     // ---------------------------------------------------------------
     private void executeWabaResolution(OnboardingTask task) {
 
+        if (task.getResolvedWabaId() != null) {
+            log.info("Task id={}: wabaId already supplied by client ({}) — skipping "
+                    + "owned_whatsapp_business_accounts resolution call", task.getId(), task.getResolvedWabaId());
+            task.moveToStep(OnboardingStep.PHONE_NUMBER_RESOLUTION);
+            return;
+        }
+
         String accessToken = tokenCipherPort.decrypt(task.getEncryptedAccessToken());
         String path = "/" + task.getResolvedBusinessManagerId() + "/owned_whatsapp_business_accounts";
 
@@ -281,6 +302,13 @@ public class OnboardingWorkflowExecutor {
     // 6. PHONE_NUMBER_RESOLUTION
     // ---------------------------------------------------------------
     private void executePhoneNumberResolution(OnboardingTask task) {
+
+        if (task.getResolvedPhoneNumberId() != null) {
+            log.info("Task id={}: phoneNumberId already supplied by client ({}) — skipping "
+                    + "phone_numbers resolution call", task.getId(), task.getResolvedPhoneNumberId());
+            task.moveToStep(OnboardingStep.CREDENTIAL_PERSISTENCE);
+            return;
+        }
 
         String accessToken = tokenCipherPort.decrypt(task.getEncryptedAccessToken());
         String path = "/" + task.getResolvedWabaId() + "/phone_numbers";

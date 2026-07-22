@@ -40,6 +40,24 @@ public class StartOnboardingRequest {
 
     @NotBlank
     @Size(max = 200)
-    @Schema(description = "Client-supplied idempotency key — replaying the same key returns the existing task instead of starting a duplicate onboarding", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(description = "Client-supplied idempotency key — replaying the same key with the same "
+            + "oauthCode returns the existing task instead of starting a duplicate onboarding. "
+            + "Generate once per genuine user action (e.g. on button click) and reuse it if retrying "
+            + "after a network failure, so a retry is safely deduplicated instead of creating a "
+            + "duplicate task.", requiredMode = Schema.RequiredMode.REQUIRED)
     private String idempotencyKey;
+
+    @Size(max = 100)
+    @Schema(description = "Optional — Meta WABA ID, returned directly to the frontend by the Embedded "
+            + "Signup JS SDK's postMessage 'FINISH' event (event.data.waba_id). If supplied, "
+            + "WABA_RESOLUTION is skipped and this value is used as-is; if omitted, the backend "
+            + "resolves it via the Graph API.")
+    private String wabaId;
+
+    @Size(max = 100)
+    @Schema(description = "Optional — Meta Phone Number ID, returned directly to the frontend by the "
+            + "Embedded Signup JS SDK's postMessage 'FINISH' event (event.data.phone_number_id). If "
+            + "supplied, PHONE_NUMBER_RESOLUTION is skipped and this value is used as-is; if omitted, "
+            + "the backend resolves it via the Graph API.")
+    private String phoneNumberId;
 }

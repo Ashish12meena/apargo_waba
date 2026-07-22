@@ -5,6 +5,7 @@ import com.apargo.waba.api.response.OnboardingTaskResponse;
 import com.apargo.waba.application.mapper.OnboardingTaskMapper;
 import com.apargo.waba.application.port.in.OnboardingUsecase;
 import com.apargo.waba.application.port.out.OnboardingTaskRepositoryPort;
+import com.apargo.waba.common.exception.IdempotencyKeyConflictException;
 import com.apargo.waba.common.exception.InvalidOnboardingStateException;
 import com.apargo.waba.common.exception.ResourceNotFoundException;
 import com.apargo.waba.domain.entity.OnboardingTask;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Implementation of {@link OnboardingUsecase}.
@@ -43,12 +45,32 @@ public class OnboardingServiceImpl implements OnboardingUsecase {
     public OnboardingTaskResponse startOnboarding(StartOnboardingRequest request) {
 
         return onboardingTaskRepositoryPort.findByIdempotencyKey(request.getIdempotencyKey())
-                .map(existing -> {
-                    log.info("Idempotency key {} already used — returning existing task id={}",
-                            request.getIdempotencyKey(), existing.getId());
-                    return mapper.toResponse(existing);
-                })
+                .map(existing -> handleReplay(existing, request))
                 .orElseGet(() -> createAndStart(request));
+    }
+
+    /**
+     * A key match was found. Only treat this as a legitimate idempotent
+     * replay if the {@code oauthCode} also matches — a reused key with a
+     * different oauthCode means the key was reused incorrectly (client bug
+     * or collision), and silently returning the old task's result would
+     * silently drop the new request instead of surfacing the problem.
+     */
+    private OnboardingTaskResponse handleReplay(OnboardingTask existing, StartOnboardingRequest request) {
+
+        String idempotencyKey = request.getIdempotencyKey();
+
+        if (!Objects.equals(existing.getOauthCode(), request.getOauthCode())) {
+            throw new IdempotencyKeyConflictException(
+                    "idempotencyKey '" + idempotencyKey + "' was already used to start onboarding task id="
+                            + existing.getId() + " with a different oauthCode. Reusing an idempotency key "
+                            + "must represent a retry of the exact same request — generate a new key for "
+                            + "a genuinely new onboarding attempt.");
+        }
+
+        log.info("Idempotency key {} already used with matching oauthCode — returning existing task id={}",
+                idempotencyKey, existing.getId());
+        return mapper.toResponse(existing);
     }
 
     private OnboardingTaskResponse createAndStart(StartOnboardingRequest request) {
@@ -59,6 +81,16 @@ public class OnboardingServiceImpl implements OnboardingUsecase {
                 .oauthCode(request.getOauthCode())
                 .idempotencyKey(request.getIdempotencyKey())
                 .status(OnboardingStatus.PENDING)
+                // Pre-populate resolution results if the client already has
+                // them (e.g. waba_id/phone_number_id from the Embedded
+                // Signup JS SDK's postMessage event) — the corresponding
+                // *_RESOLUTION step in OnboardingWorkflowExecutor checks
+                // these and skips its API call when already set.
+                // businessManagerId is deliberately NOT accepted from the
+                // client — it's always resolved by the backend (see
+                // BUSINESS_MANAGER_RESOLUTION), not client-supplied.
+                .resolvedWabaId(request.getWabaId())
+                .resolvedPhoneNumberId(request.getPhoneNumberId())
                 .build();
 
         task = onboardingTaskRepositoryPort.save(task);
