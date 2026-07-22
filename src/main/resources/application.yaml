@@ -1,0 +1,69 @@
+spring:
+  application:
+    name: waba-service
+
+  datasource:
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:apargo_wa_waba}?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:meenagaming12@#}
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+
+
+# Springdoc / Swagger UI — versioned OpenAPI docs for every public endpoint.
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+  show-actuator: false
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URI:http://146.88.24.113:8761/eureka}
+    fetch-registry: true
+    register-with-eureka: true
+  instance:
+    prefer-ip-address: true
+
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{traceId:-},%X{orgId:-}] %-5level %logger{36} - %msg%n"
+
+# ─────────────────────────────────────────────────────────────────
+# Meta WhatsApp Cloud API — bound to MetaApiProperties.
+# No class in this service should read these via @Value; always
+# inject MetaApiProperties.
+# ─────────────────────────────────────────────────────────────────
+meta:
+  graph-api-version: ${META_GRAPH_API_VERSION:v23.0}
+  base-url: ${META_GRAPH_BASE_URL:https://graph.facebook.com}
+  app-id: ${META_APP_ID:64}
+  app-secret: ${META_APP_SECRET:7f07488}
+  webhook-verify-token: ${META_WEBHOOK_VERIFY_TOKEN:65487908975900}
+  config-id: ${META_CONFIG_ID:1166327075264525}
+  oauth:
+    redirect-uri: ${META_OAUTH_REDIRECT_URI:}
+    scopes:
+      - whatsapp_business_management
+      - whatsapp_business_messaging
+      - business_management
+  token:
+    encryption-key: ${META_TOKEN_ENCRYPTION_KEY:a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2}
+  http:
+    connect-timeout-ms: 5000
+    read-timeout-ms: 15000
+
+# Bound to OnboardingProperties — Embedded Signup saga tuning.
+onboarding:
+  max-retries: 3
+  idempotency-ttl-hours: 24
+
+# Bound to UsageProperties — WabaDailyMessageUsage retention.
+usage:
+  daily-usage-retention-days: 90
