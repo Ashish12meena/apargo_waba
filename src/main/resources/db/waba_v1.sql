@@ -10,13 +10,31 @@ CREATE DATABASE IF NOT EXISTS apargo_wa_messaging
 
 USE apargo_wa_messaging;
 
-SET FOREIGN_KEY_CHECKS = 0;
+-- =====================================================================
+-- Drop tables (reverse dependency order — children/leaves before
+-- parents, so no active FK reference blocks a drop). No
+-- SET FOREIGN_KEY_CHECKS toggle needed since order is correct in
+-- both directions.
+-- =====================================================================
+DROP TABLE IF EXISTS pinacle_credit_line_attachments;   -- leaf, references waba_accounts
+DROP TABLE IF EXISTS pinacle_billing_config;             -- leaf, references pinacle_credentials
+DROP TABLE IF EXISTS pinacle_credit_ledger;              -- leaf, references pinacle_credentials
+DROP TABLE IF EXISTS waba_phone_numbers;                 -- leaf, references waba_accounts
+DROP TABLE IF EXISTS waba_daily_message_usage;           -- leaf, references waba_accounts
+DROP TABLE IF EXISTS project_waba_assignments;           -- leaf, references waba_accounts
+DROP TABLE IF EXISTS onboarding_tasks;                   -- standalone, no FK
+DROP TABLE IF EXISTS waba_accounts;                      -- now safe: all its children dropped above
+DROP TABLE IF EXISTS pinacle_credentials;                -- now safe: waba_accounts and its own children dropped above
+DROP TABLE IF EXISTS meta_oauth_tokens;                  -- now safe: waba_accounts dropped above
+
+
+-- =====================================================================
+-- Create tables (forward dependency order — parents before children)
+-- =====================================================================
 
 -- =====================================================================
 -- 1. meta_oauth_tokens
 -- =====================================================================
-DROP TABLE IF EXISTS meta_oauth_tokens;
-
 CREATE TABLE meta_oauth_tokens (
     id                      BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     organization_id         BIGINT NOT NULL,                                  -- external org id
@@ -30,20 +48,17 @@ CREATE TABLE meta_oauth_tokens (
     token_type               ENUM('USER_TOKEN','SYSTEM_USER') NOT NULL DEFAULT 'USER_TOKEN', -- USER_TOKEN or SYSTEM_USER
     created_at                DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
     updated_at                DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
-    deleted_at                 DATETIME(6) NULL
+    deleted_at                 DATETIME(6) NULL,
 
-    -- multiple meta_oauth_tokens rows per org are currently allowed
-    -- (org can connect more than one Meta Business Manager separately)
-    -- to restrict an org to ONE Meta auth account, apply this:
-    -- , CONSTRAINT uq_meta_oauth_tokens_org UNIQUE (organization_id)
+    -- Product decision: an organization is restricted to exactly one
+    -- Meta Business Manager (and therefore one token) on this platform.
+    CONSTRAINT uq_meta_oauth_tokens_org UNIQUE (organization_id)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 
 -- =====================================================================
 -- 2. pinacle_credentials
 -- =====================================================================
-DROP TABLE IF EXISTS pinacle_credentials;
-
 CREATE TABLE pinacle_credentials (
     id                      BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     organization_id         BIGINT NOT NULL,                                  -- external org id
@@ -69,14 +84,12 @@ CREATE TABLE pinacle_credentials (
 -- =====================================================================
 -- 3. waba_accounts
 -- =====================================================================
-DROP TABLE IF EXISTS waba_accounts;
-
 CREATE TABLE waba_accounts (
     id                                BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     organization_id                   BIGINT NOT NULL,                        -- external org id
     onboarding_provider               ENUM('META_DIRECT','PINACLE') NOT NULL DEFAULT 'META_DIRECT',
     meta_oauth_token_id               BIGINT UNSIGNED NULL,                   -- set when onboarding_provider = META_DIRECT
-    pinacle_credential_id             BIGINT UNSIGNED NULL,                   -- set when onboarding_provider = PINACLE
+    bsp_credential_id                 BIGINT UNSIGNED NULL,                   -- set when onboarding_provider uses a BSP (e.g. PINACLE) — column kept generic since more BSPs than Pinacle may be added later
     waba_id                           VARCHAR(100) NOT NULL,                  -- Meta-issued WABA ID
     business_manager_id               VARCHAR(100) NULL,
     status                            ENUM('ACTIVE','SUSPENDED','DISCONNECTED') NOT NULL,
@@ -95,17 +108,17 @@ CREATE TABLE waba_accounts (
     CONSTRAINT fk_waba_accounts_meta_oauth_token
         FOREIGN KEY (meta_oauth_token_id) REFERENCES meta_oauth_tokens (id),
 
-    CONSTRAINT fk_waba_accounts_pinacle_credential
-        FOREIGN KEY (pinacle_credential_id) REFERENCES pinacle_credentials (id),
+    CONSTRAINT fk_waba_accounts_bsp_credential
+        FOREIGN KEY (bsp_credential_id) REFERENCES pinacle_credentials (id),
 
     CONSTRAINT chk_waba_accounts_provider_credential                          -- exactly one credential FK must match onboarding_provider
         CHECK (
             (onboarding_provider = 'META_DIRECT'
                 AND meta_oauth_token_id IS NOT NULL
-                AND pinacle_credential_id IS NULL)
+                AND bsp_credential_id IS NULL)
             OR
             (onboarding_provider = 'PINACLE'
-                AND pinacle_credential_id IS NOT NULL
+                AND bsp_credential_id IS NOT NULL
                 AND meta_oauth_token_id IS NULL)
         )
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
@@ -114,8 +127,6 @@ CREATE TABLE waba_accounts (
 -- =====================================================================
 -- 4. pinacle_credit_line_attachments
 -- =====================================================================
-DROP TABLE IF EXISTS pinacle_credit_line_attachments;
-
 CREATE TABLE pinacle_credit_line_attachments (
     id                      BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     waba_account_id         BIGINT UNSIGNED NOT NULL,                         -- the client WABA this credit line was attached to
@@ -139,8 +150,6 @@ CREATE TABLE pinacle_credit_line_attachments (
 -- =====================================================================
 -- 5. pinacle_billing_config
 -- =====================================================================
-DROP TABLE IF EXISTS pinacle_billing_config;
-
 CREATE TABLE pinacle_billing_config (
     id                          BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     pinacle_credential_id       BIGINT UNSIGNED NOT NULL,
@@ -179,8 +188,6 @@ CREATE TABLE pinacle_billing_config (
 -- =====================================================================
 -- 6. pinacle_credit_ledger
 -- =====================================================================
-DROP TABLE IF EXISTS pinacle_credit_ledger;
-
 CREATE TABLE pinacle_credit_ledger (
     id                          BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     pinacle_credential_id       BIGINT UNSIGNED NOT NULL,
@@ -201,8 +208,6 @@ CREATE TABLE pinacle_credit_ledger (
 -- =====================================================================
 -- 7. waba_phone_numbers
 -- =====================================================================
-DROP TABLE IF EXISTS waba_phone_numbers;
-
 CREATE TABLE waba_phone_numbers (
     id                              BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     waba_account_id                 BIGINT UNSIGNED NOT NULL,
@@ -231,8 +236,6 @@ CREATE TABLE waba_phone_numbers (
 -- =====================================================================
 -- 8. waba_daily_message_usage
 -- =====================================================================
-DROP TABLE IF EXISTS waba_daily_message_usage;
-
 CREATE TABLE waba_daily_message_usage (
     id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     waba_account_id     BIGINT UNSIGNED NOT NULL,
@@ -254,8 +257,6 @@ CREATE TABLE waba_daily_message_usage (
 -- =====================================================================
 -- 9. project_waba_assignments
 -- =====================================================================
-DROP TABLE IF EXISTS project_waba_assignments;
-
 CREATE TABLE project_waba_assignments (
     id                      BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     project_id               BIGINT NOT NULL,
@@ -276,8 +277,6 @@ CREATE TABLE project_waba_assignments (
 -- =====================================================================
 -- 10. onboarding_tasks
 -- =====================================================================
-DROP TABLE IF EXISTS onboarding_tasks;
-
 CREATE TABLE onboarding_tasks (
     id                              BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     organization_id                 BIGINT NOT NULL,
@@ -321,5 +320,3 @@ CREATE TABLE onboarding_tasks (
 
     CONSTRAINT uq_onboarding_idempotency UNIQUE (idempotency_key)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
-
-SET FOREIGN_KEY_CHECKS = 1;

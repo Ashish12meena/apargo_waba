@@ -52,6 +52,19 @@ import java.util.List;
  *
  * The actual token type is stored in {@link #tokenType}.
  *
+ * <h2>Uniqueness</h2>
+ *
+ * Enforced as one row per {@code organization_id} — see
+ * {@code uq_meta_oauth_tokens_org}. Deliberate product decision: an
+ * organization is restricted to exactly one Meta Business Manager (and
+ * therefore one token) for this platform, even though Meta itself allows
+ * a business to hold multiple Business Managers. Onboarding a WABA that
+ * resolves to a <em>different</em> Business Manager than the one already
+ * on file for the organization is rejected rather than silently
+ * overwriting the existing token — see
+ * {@code OnboardingWorkflowExecutor#executeCredentialPersistence} and
+ * {@code OrganizationTokenConflictException}.
+ *
  * <h2>Security</h2>
  *
  * The access token is effectively a password for the organization's Meta assets.

@@ -91,6 +91,22 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.CONFLICT, ex.getMessage(), request, null);
     }
 
+    @ExceptionHandler(IdempotencyKeyConflictException.class)
+    public ResponseEntity<ApiErrorResponse> handleIdempotencyConflict(
+            IdempotencyKeyConflictException ex, HttpServletRequest request) {
+
+        log.warn("Idempotency key conflict on {}: {}", request.getRequestURI(), ex.getMessage());
+        return build(HttpStatus.CONFLICT, ex.getMessage(), request, null);
+    }
+
+    @ExceptionHandler(OrganizationTokenConflictException.class)
+    public ResponseEntity<ApiErrorResponse> handleOrganizationTokenConflict(
+            OrganizationTokenConflictException ex, HttpServletRequest request) {
+
+        log.warn("Organization token conflict on {}: {}", request.getRequestURI(), ex.getMessage());
+        return build(HttpStatus.CONFLICT, ex.getMessage(), request, null);
+    }
+
     @ExceptionHandler(MetaGraphApiException.class)
     public ResponseEntity<ApiErrorResponse> handleGraphApiFailure(
             MetaGraphApiException ex, HttpServletRequest request) {

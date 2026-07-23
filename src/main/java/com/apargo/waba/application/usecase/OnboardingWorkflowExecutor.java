@@ -8,6 +8,7 @@ import com.apargo.waba.application.port.out.TokenCipherPort;
 import com.apargo.waba.application.port.out.WabaAccountRepositoryPort;
 import com.apargo.waba.application.port.out.WabaPhoneNumberRepositoryPort;
 import com.apargo.waba.common.exception.MetaGraphApiException;
+import com.apargo.waba.common.exception.OrganizationTokenConflictException;
 import com.apargo.waba.domain.entity.MetaOAuthToken;
 import com.apargo.waba.domain.entity.OnboardingTask;
 import com.apargo.waba.domain.entity.ProjectWabaAssignment;
@@ -138,6 +139,15 @@ public class OnboardingWorkflowExecutor {
 
         } catch (MetaGraphApiException e) {
             log.error("Onboarding task id={} failed at step={}: {}", task.getId(), task.getCurrentStep(), e.getMessage());
+            task.fail(e.getMessage());
+            onboardingTaskRepositoryPort.save(task);
+        } catch (OrganizationTokenConflictException e) {
+            // Not a bug — an anticipated, named business-rule violation.
+            // Logged at WARN (not ERROR) and failed with a clean message,
+            // no "Unexpected error:" prefix, since this is expected to
+            // happen occasionally and the message is meant to be read by
+            // whoever is debugging the failed task.
+            log.warn("Onboarding task id={} failed at step={}: {}", task.getId(), task.getCurrentStep(), e.getMessage());
             task.fail(e.getMessage());
             onboardingTaskRepositoryPort.save(task);
         } catch (Exception e) {
@@ -342,6 +352,27 @@ public class OnboardingWorkflowExecutor {
 
         // MetaOAuthToken: the entity enforces one row per organization_id
         // (see uq_meta_oauth_tokens_org) — upsert rather than blind-insert.
+        //
+        // Guard: if a token already exists for this org AND was granted
+        // for a DIFFERENT Business Manager, refuse to overwrite it.
+        // Product decision: an organization is restricted to exactly one
+        // Business Manager on this platform. Silently overwriting here
+        // would break API access for every WABA already onboarded under
+        // the original Business Manager.
+        metaOAuthTokenRepositoryPort.findByOrganizationId(task.getOrganizationId())
+                .stream().findFirst()
+                .filter(existing -> existing.getBusinessManagerId() != null)
+                .filter(existing -> !existing.getBusinessManagerId().equals(task.getResolvedBusinessManagerId()))
+                .ifPresent(existing -> {
+                    throw new OrganizationTokenConflictException(
+                            "Organization " + task.getOrganizationId() + " already has a Meta connection to "
+                                    + "Business Manager " + existing.getBusinessManagerId() + ", but this "
+                                    + "onboarding resolved a different Business Manager ("
+                                    + task.getResolvedBusinessManagerId() + "). This platform restricts an "
+                                    + "organization to one Business Manager — reuse the existing WABA/Business "
+                                    + "Manager to onboard an additional phone number or WABA.");
+                });
+
         MetaOAuthToken token = metaOAuthTokenRepositoryPort.findByOrganizationId(task.getOrganizationId())
                 .stream().findFirst()
                 .map(existing -> {

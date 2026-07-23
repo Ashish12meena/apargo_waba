@@ -21,9 +21,9 @@ public interface MetaOAuthTokenRepositoryPort {
     Optional<MetaOAuthToken> findById(Long id);
 
     /**
-     * An organization may hold more than one Meta connection (e.g. more
-     * than one Business Manager) — see {@code waba_sql.md} note on
-     * {@code meta_oauth_tokens}.
+     * An organization is restricted to exactly one Meta connection —
+     * see {@code uq_meta_oauth_tokens_org}. This list will contain at
+     * most one element in normal operation.
      */
     List<MetaOAuthToken> findByOrganizationId(Long organizationId);
 
