@@ -25,7 +25,8 @@ import org.springframework.context.annotation.Configuration;
         MetaApiProperties.class,
         OnboardingProperties.class,
         UsageProperties.class,
-        WebhookProperties.class
+        WebhookProperties.class,
+        CorsProperties.class
 })
 public class AppPropertiesConfig {
 }

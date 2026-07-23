@@ -69,3 +69,16 @@ onboarding:
 # Bound to UsageProperties — WabaDailyMessageUsage retention.
 usage:
   daily-usage-retention-days: 90
+
+cors:
+  allowed-methods:
+    - GET
+    - POST
+    - PUT
+    - PATCH
+    - DELETE
+    - OPTIONS
+  allowed-headers:
+    - "*"
+  allow-credentials: false
+  max-age-seconds: 3600
