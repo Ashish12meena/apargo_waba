@@ -26,12 +26,13 @@ import java.util.List;
 public class CorsProperties {
 
     /**
-     * Exact origins allowed to call this API, e.g.
-     * {@code https://app.example.com}. No wildcard {@code *} — this API
-     * uses {@code allow-credentials: true} for cookie/session-based
-     * scenarios, and browsers reject the combination of {@code *} with
-     * credentialed requests outright, so explicit origins are required
-     * either way.
+     * Origins allowed to call this API, e.g. {@code https://app.example.com}.
+     * Supports wildcard patterns (e.g. {@code *} or {@code https://*.example.com})
+     * because {@link CorsConfig} applies these via
+     * {@code CorsConfiguration#setAllowedOriginPatterns}, which — unlike
+     * {@code setAllowedOrigins} — safely reflects the matched origin back
+     * even when {@code allow-credentials: true}. Still, prefer listing
+     * explicit origins in production rather than relying on {@code *}.
      */
     @NotEmpty
     private List<String> allowedOrigins = new ArrayList<>();

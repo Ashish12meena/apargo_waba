@@ -81,5 +81,5 @@ cors:
     - OPTIONS
   allowed-headers:
     - "*"
-  allow-credentials: false
+  allow-credentials: true
   max-age-seconds: 3600
