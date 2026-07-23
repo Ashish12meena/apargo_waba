@@ -152,12 +152,26 @@ public enum OnboardingStep {
     }
 
     /**
-     * Returns true if the step can normally
-     * be retried after a transient failure.
+     * Returns true if the step can normally be retried after a transient
+     * failure — i.e. re-running it will not corrupt data or create
+     * duplicates.
+     *
+     * <p>{@code CREDENTIAL_PERSISTENCE} was originally excluded here on
+     * the assumption that its writes were unguarded inserts, where a
+     * retry after a partial failure could create duplicate
+     * {@code MetaOAuthToken}/{@code WabaAccount}/{@code WabaPhoneNumber}/
+     * {@code ProjectWabaAssignment} rows. {@code OnboardingWorkflowExecutor}
+     * now guards every write in that step with a lookup-before-insert
+     * (find-by-natural-key, update if present, create if absent), making
+     * it safe to re-run — see
+     * {@code OnboardingWorkflowExecutor#executeCredentialPersistence}.
+     * All steps are currently retryable; this method exists as an
+     * extension point for a future step that genuinely cannot be made
+     * idempotent (e.g. a one-shot, non-upsertable external side effect).
      */
     public boolean isRetryable() {
 
-        return this != CREDENTIAL_PERSISTENCE;
+        return true;
 
     }
 

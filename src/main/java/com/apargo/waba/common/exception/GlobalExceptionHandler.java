@@ -40,6 +40,14 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.BAD_REQUEST, "Validation failed", request, fieldErrors);
     }
 
+    @ExceptionHandler(InvalidRequestException.class)
+    public ResponseEntity<ApiErrorResponse> handleInvalidRequest(
+            InvalidRequestException ex, HttpServletRequest request) {
+
+        log.warn("Invalid request on {}: {}", request.getRequestURI(), ex.getMessage());
+        return build(HttpStatus.BAD_REQUEST, ex.getMessage(), request, null);
+    }
+
     /**
      * A required {@code @RequestParam} was missing entirely — e.g. Meta (or
      * any caller) omitting {@code hub.mode}/{@code hub.verify_token}/

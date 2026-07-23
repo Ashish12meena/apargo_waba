@@ -128,6 +128,20 @@ public class OnboardingServiceImpl implements OnboardingUsecase {
                             + ", maxRetries=" + onboardingProperties.getMaxRetries() + ")");
         }
 
+        // Step-level check, separate from the task-level status/retryCount
+        // check above: canRetry() only asks "is a retry attempt allowed at
+        // all", isRetryable() asks "is it SAFE to re-run the specific step
+        // this task failed at". Currently every step answers true (see
+        // OnboardingStep#isRetryable), but this guard is what would
+        // actually stop a retry if a future step were added that can't be
+        // made idempotent — without this check, that flag would be
+        // documentation only and never enforced.
+        if (task.getCurrentStep() != null && !task.getCurrentStep().isRetryable()) {
+            throw new InvalidOnboardingStateException(
+                    "Task " + taskId + " failed at step " + task.getCurrentStep()
+                            + ", which does not support automatic retry. Manual intervention is required.");
+        }
+
         task.incrementRetry();
         task.start(task.getCurrentStep() != null ? task.getCurrentStep() : OnboardingStep.TOKEN_EXCHANGE);
         task = onboardingTaskRepositoryPort.save(task);

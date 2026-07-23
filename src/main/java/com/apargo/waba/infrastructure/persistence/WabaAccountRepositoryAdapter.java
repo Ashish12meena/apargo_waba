@@ -40,6 +40,13 @@ public class WabaAccountRepositoryAdapter implements WabaAccountRepositoryPort {
     }
 
     @Override
+    public List<WabaAccount> findByIds(List<Long> ids) {
+        // findAllById is a built-in CrudRepository method — no custom
+        // derived-query method needed on WabaAccountJpaRepository.
+        return jpaRepository.findAllById(ids);
+    }
+
+    @Override
     public List<WabaAccount> findByOrganizationIdAndStatus(Long organizationId, WabaStatus status) {
         return jpaRepository.findByOrganizationIdAndStatus(organizationId, status);
     }

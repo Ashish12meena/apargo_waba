@@ -20,6 +20,13 @@ public interface WabaAccountRepositoryPort {
 
     List<WabaAccount> findByOrganizationId(Long organizationId);
 
+    /**
+     * Batch lookup — used to resolve the set of WABAs assigned to a
+     * project (via {@code ProjectWabaAssignment.wabaAccountId}) in one
+     * query instead of N individual {@link #findById(Long)} calls.
+     */
+    List<WabaAccount> findByIds(List<Long> ids);
+
     List<WabaAccount> findByOrganizationIdAndStatus(Long organizationId, WabaStatus status);
 
     /**
