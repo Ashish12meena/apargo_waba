@@ -43,14 +43,14 @@ logging:
 # inject MetaApiProperties.
 # ─────────────────────────────────────────────────────────────────
 meta:
-  graph-api-version: ${META_GRAPH_API_VERSION:v23.0}
+  graph-api-version: ${META_GRAPH_API_VERSION:v25.0}
   base-url: ${META_GRAPH_BASE_URL:https://graph.facebook.com}
-  app-id: ${META_APP_ID:64}
-  app-secret: ${META_APP_SECRET:7f07488}
+  app-id: ${META_APP_ID:1016495153990147}
+  app-secret: ${META_APP_SECRET:7f07b54ec86360b0f806779c022a5488}
   webhook-verify-token: ${META_WEBHOOK_VERIFY_TOKEN:65487908975900}
-  config-id: ${META_CONFIG_ID:1166327075264525}
+  config-id: ${META_CONFIG_ID:1166327075264525}  # does not used in code
   oauth:
-    redirect-uri: ${META_OAUTH_REDIRECT_URI:}
+    redirect-uri: ${META_OAUTH_REDIRECT_URI:https://api.aigreentick.com/api/v1/integrations/calendly/callback}
     scopes:
       - whatsapp_business_management
       - whatsapp_business_messaging

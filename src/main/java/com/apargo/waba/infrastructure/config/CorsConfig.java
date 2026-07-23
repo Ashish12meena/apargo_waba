@@ -6,23 +6,24 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.filter.CorsFilter;
 
 /**
  * Wires {@link CorsProperties} into an actual CORS configuration.
  * <p>
  * {@code CorsProperties} being bound via {@code @ConfigurationProperties}
- * is not enough on its own - Spring MVC does not apply any CORS handling
- * unless a {@link CorsConfigurationSource} (or a {@code WebMvcConfigurer}
- * that registers CORS mappings) is actually present in the context. Without
- * this class, every non-"simple" cross-origin request (POST, PUT, PATCH,
- * DELETE, or GET with custom headers) fails its preflight {@code OPTIONS}
- * check and gets blocked by the browser - only plain GET requests (which
- * don't require a preflight) appear to work.
+ * is not enough on its own, and neither is a lone {@link CorsConfigurationSource}
+ * bean - this app has no Spring Security, and in plain Spring MVC a
+ * {@code CorsConfigurationSource} bean is only auto-applied by Spring
+ * Security's {@code http.cors()}. Without Security in the classpath, the
+ * source bean sits in the context unused unless something explicitly
+ * consumes it - hence the {@link CorsFilter} bean below, which registers
+ * it directly with the servlet filter chain so every request (MVC or not)
+ * actually gets CORS headers applied.
  */
 @Configuration
 @RequiredArgsConstructor
-public class CorsConfig implements WebMvcConfigurer {
+public class CorsConfig {
 
     private final CorsProperties corsProperties;
 
@@ -43,5 +44,10 @@ public class CorsConfig implements WebMvcConfigurer {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
+    }
+
+    @Bean
+    public CorsFilter corsFilter(CorsConfigurationSource corsConfigurationSource) {
+        return new CorsFilter(corsConfigurationSource);
     }
 }
