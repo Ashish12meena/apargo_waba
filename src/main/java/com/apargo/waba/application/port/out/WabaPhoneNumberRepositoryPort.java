@@ -19,5 +19,12 @@ public interface WabaPhoneNumberRepositoryPort {
 
     List<WabaPhoneNumber> findByWabaAccountId(Long wabaAccountId);
 
+    /**
+     * Batch lookup — used when listing phone numbers for several WABAs at
+     * once (e.g. all WABAs in an organization) in a single query instead
+     * of N individual {@link #findByWabaAccountId(Long)} calls.
+     */
+    List<WabaPhoneNumber> findByWabaAccountIdIn(List<Long> wabaAccountIds);
+
     void deleteById(Long id);
 }

@@ -1,17 +1,22 @@
 package com.apargo.waba.api.v1;
 
+import com.apargo.waba.api.response.WabaAccountDetailResponse;
 import com.apargo.waba.api.response.WabaAccountResponse;
 import com.apargo.waba.application.port.in.WabaAccountUsecase;
 import com.apargo.waba.common.exception.InvalidRequestException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -65,5 +70,45 @@ public class WabaAccountController {
 
         log.info("GET /api/v1/waba-accounts projectId={}", projectId);
         return ResponseEntity.ok(wabaAccountUsecase.listByProject(projectId));
+    }
+
+    @GetMapping("/organization/{organizationId}")
+    @Operation(
+            summary = "List WABA accounts for an organization, with phone numbers",
+            description = "Every WABA owned by the organization, each including its registered phone numbers.")
+    public ResponseEntity<List<WabaAccountDetailResponse>> listByOrganizationDetail(
+            @Parameter(description = "Organization to list WABAs for")
+            @PathVariable @NotNull @Positive Long organizationId) {
+
+        log.info("GET /api/v1/waba-accounts/organization/{}", organizationId);
+        return ResponseEntity.ok(wabaAccountUsecase.listDetailByOrganization(organizationId));
+    }
+
+    @GetMapping("/project/{projectId}")
+    @Operation(
+            summary = "List WABA accounts for a project, with phone numbers",
+            description = "Every WABA assigned to the project (via ProjectWabaAssignment), "
+                    + "each including its registered phone numbers.")
+    public ResponseEntity<List<WabaAccountDetailResponse>> listByProjectDetail(
+            @Parameter(description = "Project to list WABAs for")
+            @PathVariable @NotNull @Positive Long projectId) {
+
+        log.info("GET /api/v1/waba-accounts/project/{}", projectId);
+        return ResponseEntity.ok(wabaAccountUsecase.listDetailByProject(projectId));
+    }
+
+    @GetMapping("/waba/{wabaId}")
+    @Operation(
+            summary = "Get a WABA account by Meta's WABA id",
+            description = "Resolves a WABA using Meta's globally unique WABA id and returns it "
+                    + "together with its registered phone numbers.")
+    @ApiResponse(responseCode = "200", description = "WABA found")
+    @ApiResponse(responseCode = "404", description = "No WABA account exists for the given wabaId")
+    public ResponseEntity<WabaAccountDetailResponse> getByWabaId(
+            @Parameter(description = "Meta's WABA id", example = "123456789012345")
+            @PathVariable @NotBlank String wabaId) {
+
+        log.info("GET /api/v1/waba-accounts/waba/{}", wabaId);
+        return ResponseEntity.ok(wabaAccountUsecase.getByWabaId(wabaId));
     }
 }

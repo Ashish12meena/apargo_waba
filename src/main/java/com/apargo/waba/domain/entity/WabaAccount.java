@@ -2,6 +2,7 @@ package com.apargo.waba.domain.entity;
 
 import com.apargo.waba.domain.enums.AccountReviewStatus;
 import com.apargo.waba.domain.enums.BusinessVerificationStatus;
+import com.apargo.waba.domain.enums.OnboardingProvider;
 import com.apargo.waba.domain.enums.WabaStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -113,20 +114,50 @@ public class WabaAccount {
     private Long organizationId;
 
     /**
-     * Authentication credential used to manage this WABA.
+     * Which onboarding channel provisioned this WABA.
+     *
+     * <ul>
+     *     <li>{@link OnboardingProvider#META_DIRECT} –
+     *         Embedded Signup directly with Meta.
+     *         Requires {@link #metaOAuthTokenId}.</li>
+     *     <li>{@link OnboardingProvider#PINACLE} –
+     *         Provisioned through Pinnacle Teleservices BSP.
+     *         Requires {@link #bspCredentialId}.</li>
+     * </ul>
+     *
+     * A CHECK constraint on the table ensures exactly one
+     * credential FK is populated, matching this provider.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "onboarding_provider", nullable = false)
+    @Builder.Default
+    private OnboardingProvider onboardingProvider =
+            OnboardingProvider.META_DIRECT;
+
+    /**
+     * Authentication credential used to manage this WABA
+     * when onboarded via {@link OnboardingProvider#META_DIRECT}.
      *
      * The referenced token supplies the Authorization header
      * for Graph API requests.
      *
-     * Example:
-     *
-     * GET /{waba-id}/phone_numbers
-     *
-     * Authorization:
-     * Bearer &lt;token&gt;
+     * NULL when the WABA was onboarded through a BSP.
      */
-    @Column(name = "meta_oauth_token_id", nullable = false)
+    @Column(name = "meta_oauth_token_id")
     private Long metaOAuthTokenId;
+
+    /**
+     * BSP credential used to manage this WABA
+     * when onboarded via a BSP such as Pinnacle Teleservices.
+     *
+     * NULL when the WABA was onboarded directly with Meta.
+     *
+     * Currently references {@code pinacle_credentials},
+     * but the column is kept generic ({@code bsp_credential_id})
+     * in case additional BSPs are added later.
+     */
+    @Column(name = "bsp_credential_id")
+    private Long bspCredentialId;
 
     /**
      * Meta's globally unique WhatsApp Business Account identifier.
@@ -333,6 +364,28 @@ public class WabaAccount {
     public boolean isActive() {
 
         return status == WabaStatus.ACTIVE;
+
+    }
+
+    /**
+     * Returns true when this WABA was onboarded
+     * directly with Meta (Embedded Signup).
+     */
+    public boolean isMetaDirect() {
+
+        return onboardingProvider ==
+                OnboardingProvider.META_DIRECT;
+
+    }
+
+    /**
+     * Returns true when this WABA was onboarded
+     * through a BSP (currently Pinnacle Teleservices).
+     */
+    public boolean isBspManaged() {
+
+        return onboardingProvider ==
+                OnboardingProvider.PINNACLE;
 
     }
 

@@ -39,6 +39,11 @@ public class WabaPhoneNumberRepositoryAdapter implements WabaPhoneNumberReposito
     }
 
     @Override
+    public List<WabaPhoneNumber> findByWabaAccountIdIn(List<Long> wabaAccountIds) {
+        return jpaRepository.findByWabaAccountIdIn(wabaAccountIds);
+    }
+
+    @Override
     public void deleteById(Long id) {
         jpaRepository.deleteById(id);
     }

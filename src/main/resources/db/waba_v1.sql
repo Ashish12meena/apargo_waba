@@ -87,9 +87,9 @@ CREATE TABLE pinacle_credentials (
 CREATE TABLE waba_accounts (
     id                                BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     organization_id                   BIGINT NOT NULL,                        -- external org id
-    onboarding_provider               ENUM('META_DIRECT','PINACLE') NOT NULL DEFAULT 'META_DIRECT',
+    onboarding_provider               ENUM('META_DIRECT','PINNACLE') NOT NULL DEFAULT 'META_DIRECT',
     meta_oauth_token_id               BIGINT UNSIGNED NULL,                   -- set when onboarding_provider = META_DIRECT
-    bsp_credential_id                 BIGINT UNSIGNED NULL,                   -- set when onboarding_provider uses a BSP (e.g. PINACLE) — column kept generic since more BSPs than Pinacle may be added later
+    bsp_credential_id                 BIGINT UNSIGNED NULL,                   -- set when onboarding_provider uses a BSP (e.g. PINNACLE) — column kept generic since more BSPs than Pinacle may be added later
     waba_id                           VARCHAR(100) NOT NULL,                  -- Meta-issued WABA ID
     business_manager_id               VARCHAR(100) NULL,
     status                            ENUM('ACTIVE','SUSPENDED','DISCONNECTED') NOT NULL,
@@ -117,7 +117,7 @@ CREATE TABLE waba_accounts (
                 AND meta_oauth_token_id IS NOT NULL
                 AND bsp_credential_id IS NULL)
             OR
-            (onboarding_provider = 'PINACLE'
+            (onboarding_provider = 'PINNACLE'
                 AND bsp_credential_id IS NOT NULL
                 AND meta_oauth_token_id IS NULL)
         )
@@ -281,7 +281,7 @@ CREATE TABLE onboarding_tasks (
     id                              BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     organization_id                 BIGINT NOT NULL,
     project_id                       BIGINT NULL,
-    provider                         ENUM('META_DIRECT','PINACLE') NOT NULL DEFAULT 'META_DIRECT',
+    -- provider                         ENUM('META_DIRECT','PINNACLE') NOT NULL DEFAULT 'META_DIRECT',
     oauth_code                       VARCHAR(500) NOT NULL,                    -- code returned by the embedded signup popup
     status                           ENUM('FAILED','PROCESSING','COMPLETED','CANCELLED','PENDING') NOT NULL DEFAULT 'PENDING',
     current_step                     ENUM(
@@ -296,10 +296,7 @@ CREATE TABLE onboarding_tasks (
                                         'PHONE_SYNC',
                                         'PHONE_REGISTRATION',
                                         'SMB_SYNC',
-                                        'PHASE2_PROVISIONING',
-                                        'PINACLE_API_KEY_VALIDATION',
-                                        'PINACLE_PARTNER_RESOLUTION',
-                                        'PINACLE_CREDIT_LINE_ATTACH'
+                                        'PHASE2_PROVISIONING'
                                      ) NULL,
     retry_count                     INT NOT NULL DEFAULT 0,
     idempotency_key                  VARCHAR(200) NOT NULL,                    -- prevents duplicate onboarding runs

@@ -1,8 +1,8 @@
 spring:
   application:
     name: waba-service
-  profiles:
-    active: dev
+  # profiles:
+  #   active: dev
 
   datasource:
     url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:apargo_wa_waba}?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true

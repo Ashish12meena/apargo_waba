@@ -16,4 +16,6 @@ public interface WabaPhoneNumberJpaRepository extends JpaRepository<WabaPhoneNum
     Optional<WabaPhoneNumber> findByWhatsappPhoneNumberId(String whatsappPhoneNumberId);
 
     List<WabaPhoneNumber> findByWabaAccountId(Long wabaAccountId);
+
+    List<WabaPhoneNumber> findByWabaAccountIdIn(List<Long> wabaAccountIds);
 }
