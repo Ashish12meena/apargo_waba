@@ -33,7 +33,7 @@
 -- rows (by id) first, so this file can be re-run safely.
 -- =====================================================================
 
-use apargo_wa_waba;
+use apargo_wa_messaging;
 
 START TRANSACTION;
 
