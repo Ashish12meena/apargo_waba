@@ -83,3 +83,18 @@ cors:
     - "*"
   allow-credentials: true
   max-age-seconds: 3600
+
+
+
+
+internal:
+  api:
+    path-prefix: /internal
+    api-key: ${INTERNAL_API_KEY}
+    auth-enabled: ${INTERNAL_API_AUTH_ENABLED:false}
+
+# springdoc:
+#   paths-to-match:
+#     - /api/**
+  
+ 

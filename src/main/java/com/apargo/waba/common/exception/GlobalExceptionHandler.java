@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -106,6 +107,21 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.BAD_REQUEST, "Malformed request body", request, null);
     }
 
+    /**
+     * A required {@code @RequestHeader} was absent — in practice an internal
+     * caller that forgot {@code X-Organization-Id}. Without this it fell to
+     * the catch-all and returned 500, which reads as "the credential service
+     * is broken" when in fact the caller is misconfigured.
+     */
+    @ExceptionHandler(MissingRequestHeaderException.class)
+    public ResponseEntity<ApiErrorResponse> handleMissingHeader(
+            MissingRequestHeaderException ex, HttpServletRequest request) {
+
+        log.warn("Missing required header on {}: {}", request.getRequestURI(), ex.getHeaderName());
+        return build(HttpStatus.BAD_REQUEST,
+                "Missing required header '" + ex.getHeaderName() + "'", request, null);
+    }
+
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ApiErrorResponse> handleNotFound(
             ResourceNotFoundException ex, HttpServletRequest request) {
@@ -143,6 +159,14 @@ public class GlobalExceptionHandler {
             OrganizationTokenConflictException ex, HttpServletRequest request) {
 
         log.warn("Organization token conflict on {}: {}", request.getRequestURI(), ex.getMessage());
+        return build(HttpStatus.CONFLICT, ex.getMessage(), request, null);
+    }
+
+    @ExceptionHandler(CredentialUnavailableException.class)
+    public ResponseEntity<ApiErrorResponse> handleCredentialUnavailable(
+            CredentialUnavailableException ex, HttpServletRequest request) {
+
+        log.warn("Credential unavailable on {}: {}", request.getRequestURI(), ex.getMessage());
         return build(HttpStatus.CONFLICT, ex.getMessage(), request, null);
     }
 

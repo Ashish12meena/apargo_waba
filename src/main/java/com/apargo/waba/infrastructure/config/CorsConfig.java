@@ -26,6 +26,7 @@ import org.springframework.web.filter.CorsFilter;
 public class CorsConfig {
 
     private final CorsProperties corsProperties;
+    private final InternalApiProperties internalApiProperties;
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
@@ -42,6 +43,19 @@ public class CorsConfig {
         configuration.setMaxAge(corsProperties.getMaxAgeSeconds());
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+
+        // Registered BEFORE the catch-all: UrlBasedCorsConfigurationSource
+        // returns the first pattern that matches, in insertion order. The
+        // internal surface gets an empty CorsConfiguration - no origins, no
+        // methods - so a browser preflight against it is refused outright.
+        //
+        // Without this, cors.allowed-origins defaulting to "*" would make
+        // /internal/** reachable from any page on the web. The API key still
+        // stands in the way, but a credential endpoint should not be one
+        // leaked secret away from being callable from a browser tab.
+        source.registerCorsConfiguration(
+                internalApiProperties.getPathPrefix() + "/**", new CorsConfiguration());
+
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
