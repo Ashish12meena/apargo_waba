@@ -9,12 +9,6 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Implements {@link MetaOAuthTokenRepositoryPort} on top of Spring Data
- * JPA. Per {@code docs/rules.md}: infrastructure implements
- * application/port/out, never the reverse — nothing outside this package
- * should ever reference {@link MetaOAuthTokenJpaRepository} directly.
- */
 @Repository
 @RequiredArgsConstructor
 public class MetaOAuthTokenRepositoryAdapter implements MetaOAuthTokenRepositoryPort {
@@ -34,6 +28,11 @@ public class MetaOAuthTokenRepositoryAdapter implements MetaOAuthTokenRepository
     @Override
     public List<MetaOAuthToken> findByOrganizationId(Long organizationId) {
         return jpaRepository.findByOrganizationId(organizationId);
+    }
+
+    @Override
+    public boolean existsByOrganizationId(Long organizationId) {
+        return jpaRepository.existsByOrganizationId(organizationId);
     }
 
     @Override

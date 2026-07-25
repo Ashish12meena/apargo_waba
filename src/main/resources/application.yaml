@@ -62,7 +62,7 @@ meta:
     encryption-key: ${META_TOKEN_ENCRYPTION_KEY:a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2}
   http:
     connect-timeout-ms: 5000
-    read-timeout-ms: 15000
+    read-timeout-ms: 
 
 # Bound to OnboardingProperties — Embedded Signup saga tuning.
 onboarding:
