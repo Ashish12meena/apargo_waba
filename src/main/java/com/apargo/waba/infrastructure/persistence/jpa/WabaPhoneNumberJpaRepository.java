@@ -1,6 +1,7 @@
 package com.apargo.waba.infrastructure.persistence.jpa;
 
 import com.apargo.waba.domain.entity.WabaPhoneNumber;
+import com.apargo.waba.domain.enums.PhoneNumberStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -15,7 +16,11 @@ public interface WabaPhoneNumberJpaRepository extends JpaRepository<WabaPhoneNum
 
     Optional<WabaPhoneNumber> findByWhatsappPhoneNumberId(String whatsappPhoneNumberId);
 
+    boolean existsByWhatsappPhoneNumberId(String whatsappPhoneNumberId);
+
     List<WabaPhoneNumber> findByWabaAccountId(Long wabaAccountId);
+
+    List<WabaPhoneNumber> findByWabaAccountIdAndStatus(Long wabaAccountId, PhoneNumberStatus status);
 
     List<WabaPhoneNumber> findByWabaAccountIdIn(List<Long> wabaAccountIds);
 }

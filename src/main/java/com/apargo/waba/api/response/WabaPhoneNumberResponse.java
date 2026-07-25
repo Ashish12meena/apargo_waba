@@ -19,9 +19,13 @@ import java.time.Instant;
 /**
  * Public view of a {@link com.apargo.waba.domain.entity.WabaPhoneNumber}.
  * <p>
- * Deliberately omits {@code wabaAccountId} — an internal FK that is
- * redundant here, since every instance is returned nested inside its
- * parent {@link WabaAccountDetailResponse}, never standalone.
+ * {@code wabaAccountId} was previously omitted because every instance was
+ * returned nested inside its parent {@link WabaAccountDetailResponse}. Now
+ * that {@code /api/v1/waba-phone-numbers} returns these standalone, the
+ * parent id is the only way a caller can tell which WABA a number belongs
+ * to, so it is included. It stays populated in the nested case too —
+ * redundant there, but a single consistent shape beats two near-identical
+ * DTOs.
  */
 @Getter
 @Setter
@@ -32,6 +36,7 @@ import java.time.Instant;
 public class WabaPhoneNumberResponse {
 
     private Long id;
+    private Long wabaAccountId;
     private String whatsappPhoneNumberId;
     private String displayPhoneNumber;
     private PhoneNumberStatus status;

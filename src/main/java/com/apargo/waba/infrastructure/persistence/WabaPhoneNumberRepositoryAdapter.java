@@ -2,6 +2,7 @@ package com.apargo.waba.infrastructure.persistence;
 
 import com.apargo.waba.application.port.out.WabaPhoneNumberRepositoryPort;
 import com.apargo.waba.domain.entity.WabaPhoneNumber;
+import com.apargo.waba.domain.enums.PhoneNumberStatus;
 import com.apargo.waba.infrastructure.persistence.jpa.WabaPhoneNumberJpaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -34,8 +35,18 @@ public class WabaPhoneNumberRepositoryAdapter implements WabaPhoneNumberReposito
     }
 
     @Override
+    public boolean existsByWhatsappPhoneNumberId(String whatsappPhoneNumberId) {
+        return jpaRepository.existsByWhatsappPhoneNumberId(whatsappPhoneNumberId);
+    }
+
+    @Override
     public List<WabaPhoneNumber> findByWabaAccountId(Long wabaAccountId) {
         return jpaRepository.findByWabaAccountId(wabaAccountId);
+    }
+
+    @Override
+    public List<WabaPhoneNumber> findByWabaAccountIdAndStatus(Long wabaAccountId, PhoneNumberStatus status) {
+        return jpaRepository.findByWabaAccountIdAndStatus(wabaAccountId, status);
     }
 
     @Override

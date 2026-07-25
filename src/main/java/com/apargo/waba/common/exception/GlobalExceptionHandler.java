@@ -2,6 +2,8 @@ package com.apargo.waba.common.exception;
 
 import com.apargo.waba.api.response.ApiErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -37,6 +39,27 @@ public class GlobalExceptionHandler {
 
         log.warn("Validation failed on {}: {}", request.getRequestURI(), fieldErrors);
 
+        return build(HttpStatus.BAD_REQUEST, "Validation failed", request, fieldErrors);
+    }
+
+    /**
+     * A {@code @RequestParam}/{@code @PathVariable} failed a constraint
+     * declared directly on a controller method (e.g. {@code @Positive}) on a
+     * {@code @Validated} controller. These arrive as
+     * {@link ConstraintViolationException} rather than
+     * {@link MethodArgumentNotValidException} — without this handler they fell
+     * through to the catch-all below and surfaced as a 500 for what is plainly
+     * a client error.
+     */
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ApiErrorResponse> handleConstraintViolation(
+            ConstraintViolationException ex, HttpServletRequest request) {
+
+        List<ApiErrorResponse.FieldViolation> fieldErrors = ex.getConstraintViolations().stream()
+                .map(this::toFieldViolation)
+                .toList();
+
+        log.warn("Constraint violation on {}: {}", request.getRequestURI(), fieldErrors);
         return build(HttpStatus.BAD_REQUEST, "Validation failed", request, fieldErrors);
     }
 
@@ -107,6 +130,14 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.CONFLICT, ex.getMessage(), request, null);
     }
 
+    @ExceptionHandler(DuplicateResourceException.class)
+    public ResponseEntity<ApiErrorResponse> handleDuplicateResource(
+            DuplicateResourceException ex, HttpServletRequest request) {
+
+        log.warn("Duplicate resource on {}: {}", request.getRequestURI(), ex.getMessage());
+        return build(HttpStatus.CONFLICT, ex.getMessage(), request, null);
+    }
+
     @ExceptionHandler(OrganizationTokenConflictException.class)
     public ResponseEntity<ApiErrorResponse> handleOrganizationTokenConflict(
             OrganizationTokenConflictException ex, HttpServletRequest request) {
@@ -166,6 +197,21 @@ public class GlobalExceptionHandler {
                 .build();
 
         return ResponseEntity.status(status).body(body);
+    }
+
+    /**
+     * The violation's property path is the full method path
+     * ("list.wabaAccountId"); only the trailing segment is meaningful to a
+     * caller, so it is reported as the field name.
+     */
+    private ApiErrorResponse.FieldViolation toFieldViolation(ConstraintViolation<?> violation) {
+        String path = violation.getPropertyPath().toString();
+        String field = path.contains(".") ? path.substring(path.lastIndexOf('.') + 1) : path;
+
+        return ApiErrorResponse.FieldViolation.builder()
+                .field(field)
+                .message(violation.getMessage())
+                .build();
     }
 
     private ApiErrorResponse.FieldViolation toFieldViolation(FieldError fieldError) {

@@ -72,6 +72,7 @@ public class WabaAccountMapper {
         }
         return WabaPhoneNumberResponse.builder()
                 .id(phoneNumber.getId())
+                .wabaAccountId(phoneNumber.getWabaAccountId())
                 .whatsappPhoneNumberId(phoneNumber.getWhatsappPhoneNumberId())
                 .displayPhoneNumber(phoneNumber.getDisplayPhoneNumber())
                 .status(phoneNumber.getStatus())

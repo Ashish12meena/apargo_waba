@@ -11,7 +11,8 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Implements {@link WabaDailyMessageUsageRepositoryPort} on top of Spring Data JPA.
+ * Implements {@link WabaDailyMessageUsageRepositoryPort} on top of Spring Data
+ * JPA.
  */
 @Repository
 @RequiredArgsConstructor
