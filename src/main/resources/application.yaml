@@ -1,8 +1,8 @@
 spring:
   application:
     name: waba-service
-  profiles:
-    active: dev
+  # profiles:
+  #   active: dev
 
   datasource:
     url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:apargo_wa_waba}?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
@@ -62,7 +62,7 @@ meta:
     encryption-key: ${META_TOKEN_ENCRYPTION_KEY:bA5vXTOkebqQj7/D4tJIfTqkoAvaPaGlfi7D4RFfBZs=}
   http:
     connect-timeout-ms: 5000
-    read-timeout-ms: 
+    read-timeout-ms: 15000
 
 # Bound to OnboardingProperties — Embedded Signup saga tuning.
 onboarding:
