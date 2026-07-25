@@ -24,6 +24,9 @@ springdoc:
     tags-sorter: alpha
   show-actuator: false
 
+  # paths-to-match:
+  #   - /api/**
+
 eureka:
   client:
     service-url:
@@ -90,11 +93,7 @@ cors:
 internal:
   api:
     path-prefix: /internal
-    api-key: ${INTERNAL_API_KEY}
+    api-key: ${INTERNAL_API_KEY:random_matching_key}
     auth-enabled: ${INTERNAL_API_AUTH_ENABLED:false}
 
-# springdoc:
-#   paths-to-match:
-#     - /api/**
   
- 

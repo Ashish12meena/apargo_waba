@@ -3,7 +3,8 @@ package com.apargo.waba.api.internal.v1;
 import com.apargo.waba.api.internal.InternalHeaders;
 import com.apargo.waba.api.response.WabaCredentialResponse;
 import com.apargo.waba.application.port.in.WabaCredentialUsecase;
-import io.swagger.v3.oas.annotations.Hidden;
+import com.apargo.waba.infrastructure.config.OpenApiConfig;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -46,19 +47,22 @@ import org.springframework.web.bind.annotation.RestController;
  * every proxy hop. The response is marked {@code no-store} for the same
  * class of reason: nothing between here and the caller should retain it.
  *
- * <h2>Keeping it internal</h2>
+ * <h2>Visibility in Swagger</h2>
  *
- * {@code @Hidden} keeps these operations out of the published OpenAPI
- * document. That is documentation hygiene, not security — the gateway
- * deny rule on {@code /internal/**} and {@code InternalApiAuthFilter} are
- * what actually keep outsiders out.
+ * Controlled by {@code springdoc.paths-to-match} in YAML: set it to
+ * {@code /api/**} to hide these, leave it unset to show them. Nothing in
+ * this class hides itself.
+ *
+ * <p>That is documentation hygiene, not security — the gateway deny rule
+ * on {@code /internal/**} and {@code InternalApiAuthFilter} are what keep
+ * outsiders out. An endpoint missing from Swagger still answers.
  */
 @Slf4j
-@Hidden
 @Validated
 @RestController
 @RequestMapping("/internal/v1/waba-credentials")
 @RequiredArgsConstructor
+@SecurityRequirement(name = OpenApiConfig.INTERNAL_API_KEY_SCHEME)
 public class InternalWabaCredentialController {
 
     private final WabaCredentialUsecase wabaCredentialUsecase;
